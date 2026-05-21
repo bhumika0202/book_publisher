@@ -1,0 +1,295 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Role {
+
+  roleId     Int     @id @default(autoincrement())
+
+  roleName   String  @unique
+
+  users       User[]
+  commission    Commission[]
+
+}
+
+model User {
+
+  userId     Int     @id @default(autoincrement())
+
+  name        String  
+  email       String  @unique
+  password    String
+  
+  roleId     Int
+  role        Role     @relation(fields : [roleId], references : [roleId])
+
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  otp         String?
+  otpExpiry   DateTime?
+  
+  isVarified  Boolean @default(false)
+  books Book[]
+
+  vendorOrders  VendorOrder[] @relation("VendorOrders")
+  authorOrders  VendorOrder[] @relation("AuthorOrders")
+
+  userOrders    UserOrder[]
+
+  vendorCost    VendorCost[]
+
+  cart          Cart[]
+
+  transactions  Transaction[]
+
+  earning       Earning[]
+  withdrawal    Withdrawal[]
+}
+
+model Category {
+
+  categoryId    Int     @id @default(autoincrement())
+  name          String  @unique
+  books         Book[]
+}
+
+enum publishmode {
+  online
+  offline
+}
+
+model Book {
+
+  bookId                  Int        @id @default(autoincrement())
+  title                   String  
+  description             String
+
+  contentUrl              String
+  contentPublic_id        String
+
+  thumbnailUrl            String
+  thumbnailPublic_id      String
+
+  coverImageUrl           String
+  coverImagePublic_id     String
+
+  keywords                String[]
+  publishMode             publishmode?
+  price                   Float?
+
+  authorId                Int 
+  author                  User        @relation(fields: [authorId], references: [userId]) 
+  categoryId              Int 
+  category                Category    @relation(fields: [categoryId], references: [categoryId]) 
+  
+  isActive                Boolean     @default(false) 
+  isPublished             Boolean     @default(false)
+
+  createdAt               DateTime    @default(now())
+
+  vendorOrders            VendorOrder[]
+  userOrderItems          UserOrderItem[]
+  cart                    Cart[]  
+  earning                 Earning[]
+}
+
+model VendorOrder {
+  vendorOrderId     Int   @id @default(autoincrement())
+
+  bookId            Int
+  book              Book  @relation(fields : [bookId], references : [bookId])
+
+  vendorId          Int
+  vendor            User  @relation("VendorOrders", fields : [vendorId], references : [userId])
+
+  authorId          Int
+  author            User  @relation("AuthorOrders", fields : [authorId], references : [userId])
+
+  quantity          Int
+  totalPrice        Float
+
+  deliveryAddress   String
+  totalPage         Int
+
+  status            orderStatus @default(pending)
+  paymentStatus     TransactionStatus @default(pending)
+  createdAt         DateTime    @default(now())
+}
+
+enum orderStatus {
+  pending
+  approved
+  ongoing
+  completed
+  rejected
+}
+
+model Cart {
+  cartId        Int  @id @default(autoincrement())
+
+  userId        Int
+  users         User  @relation(fields : [userId], references : [userId])
+
+  bookId        Int
+  books         Book  @relation(fields : [bookId], references : [bookId])
+
+  quantity      Int @default(1)
+
+  createdAt     DateTime @default(now())
+
+  @@unique([userId,bookId])
+}
+
+model UserOrder {
+  userOrderId   Int @id @default(autoincrement())
+
+  userId        Int
+  user          User @relation(fields: [userId], references: [userId])
+
+  totalPrice    Float
+  paymentStatus TransactionStatus @default(pending)
+
+  createdAt     DateTime @default(now())
+
+  items         UserOrderItem[]
+}
+
+model UserOrderItem {
+  orderItemId   Int @id @default(autoincrement())
+
+  userOrderId   Int
+  order         UserOrder @relation(fields: [userOrderId], references: [userOrderId])
+
+  bookId        Int
+  book          Book @relation(fields: [bookId], references: [bookId])
+
+  quantity      Int
+  price         Float
+
+}
+
+model Commission {
+  commissionId  Int   @id @default(autoincrement())
+
+  commissionType CommissionType
+
+  value         Float
+  isActive      Boolean @default(false)
+
+  roleId        Int
+  roles          Role @relation(fields : [roleId], references : [roleId])
+}
+
+enum CommissionType {
+  percentage
+  amount
+  none
+}
+
+model VendorCost {
+  vendorCostId   Int  @id  @default(autoincrement())
+
+  vendorId    Int @unique
+  vendor      User @relation(fields : [vendorId], references : [userId])
+
+  costPerPage Float
+}
+
+model Transaction {
+  transactionId      Int @id  @default(autoincrement())
+
+  userId             Int
+  user               User @relation(fields : [userId], references : [userId])
+
+  orderId            Int
+  orderType          OrderType
+
+  amount             Float
+  paymentMethod      PaymentMethod
+
+  referenceId        String @unique
+  screenShot         String
+  screenshotPulicId  String
+  status             TransactionStatus @default(pending)
+
+  createdAt         DateTime @default(now())
+
+  earning     Earning[]
+}
+
+enum OrderType {
+  vendor
+  user
+}
+enum PaymentMethod{
+  upi
+  card
+  netbanking
+}
+
+enum TransactionStatus {
+  pending
+  success
+  failed
+}
+
+model PlatformBankDetail {
+  platformBankDetailId  Int   @id @default(autoincrement())
+
+  accountHolder         String
+  bankName              String?
+  accountNumber         String?
+  ifscCode              String?
+
+  upiId                 String?
+
+  isActive              Boolean @default(true)
+
+  createdAt             DateTime @default(now())
+}
+
+model Earning {
+  earningId     Int   @id @default(autoincrement())
+
+  userId        Int
+  user          User  @relation(fields: [userId], references: [userId])
+
+  bookId        Int
+  book          Book  @relation(fields: [bookId], references: [bookId])
+  quantity      Int 
+
+  transactionId Int
+  transaction   Transaction @relation(fields: [transactionId], references: [transactionId])
+
+  amount        Float
+  commission    Float 
+  netAmount     Float 
+
+  createdAt     DateTime @default(now())
+}
+
+model Withdrawal {
+  withdrowalId     Int @id @default(autoincrement())
+
+  userId           Int
+  users            User @relation(fields : [userId], references : [userId])
+
+  amountRequested  Float
+  status           TransactionStatus @default(pending)
+
+  createdAt        DateTime @default(now())
+}
