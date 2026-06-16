@@ -55,17 +55,19 @@ The project follows clean coding practices with a modular folder structure, vali
 ## 📂 Project Structure
 
 ```text
-src/
-│
-├── controllers/
-├── routes/
-├── middleware/
-├── validations/
-├── services/
-├── prisma/
-├── utils/
-├── config/
-└── app.js
+backend/
+|-- config/
+|-- controllers/
+|-- helper/
+|-- middleware/
+|-- prisma/
+|-- routes/
+|-- services/
+|-- utils/
+|-- validations/
+|-- app.js
+|-- package.json
+`-- prisma.config.ts
 ```
 
 ---
@@ -81,7 +83,7 @@ git clone https://github.com/your-username/book-publisher.git
 ### Navigate to the project
 
 ```bash
-cd book-publisher
+cd book-publisher/backend
 ```
 
 ### Install dependencies
@@ -92,7 +94,7 @@ npm install
 
 ### Configure environment variables
 
-Create a `.env` file in the root directory.
+Create a `.env` file in the `backend` directory.
 
 ```env
 DATABASE_URL=your_database_url
@@ -115,7 +117,7 @@ npx prisma migrate dev
 ### Start Development Server
 
 ```bash
-npm run dev
+npm start
 ```
 
 ---
