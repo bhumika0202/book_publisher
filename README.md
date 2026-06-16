@@ -1,4 +1,4 @@
-# 📚 Book Publisher Management System
+# 📚 Book Publisher Platform
 
 <div align="center">
 
